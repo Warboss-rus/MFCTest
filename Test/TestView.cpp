@@ -47,6 +47,7 @@ BEGIN_MESSAGE_MAP(CTestView, CView)
 	ON_WM_SIZE()
 	ON_WM_HSCROLL()
 	ON_WM_VSCROLL()
+	ON_WM_LBUTTONUP()
 END_MESSAGE_MAP()
 
 // CTestView construction/destruction
@@ -185,21 +186,8 @@ void CTestView::OnNewCircle()
 
 void CTestView::OnLButtonDown(UINT nFlags, CPoint point)
 {
-	CModel* pDoc = GetDocument();
-	for (unsigned int i = 0; i < pDoc->GetNumberOfFigures(); ++i)
-	{
-		if (pDoc->GetFigureAt(i)->IsOnFigure(point.x, point.y))
-		{
-			m_selectedObject = pDoc->GetFigureAt(i);
-		}
-	}
 	if (m_selectedObject)
 	{
-		CPoint top_left(m_selectedObject->GetCenterX() - m_selectedObject->GetWidth() / 2, m_selectedObject->GetCenterY() - m_selectedObject->GetHeight() / 2);
-		CPoint bottom_right(m_selectedObject->GetCenterX() + m_selectedObject->GetWidth() / 2, m_selectedObject->GetCenterY() + m_selectedObject->GetHeight() / 2);
-		CRect rect (top_left, bottom_right);
-		m_tracker = CRectTrackerUpdate(rect, CRectTracker::hatchedBorder | CRectTracker::resizeOutside | CRectTracker::resizeInside, this);
-		m_tracker.m_sizeMin = CSize(100, 100);
 		m_prevRect = m_tracker.m_rect;
 		if(m_tracker.Track(this, point, FALSE))
 		{
@@ -214,6 +202,32 @@ void CTestView::OnLButtonDown(UINT nFlags, CPoint point)
 				m_controller.ResizeFigure(m_selectedObject, m_tracker.m_rect.Width() - m_prevRect.Width(), m_tracker.m_rect.Height() - m_prevRect.Height());
 			}
 		}
+		InvalidateRect(NULL);
+	}
+}
+
+void CTestView::OnLButtonUp(UINT nFlags, CPoint point)
+{
+	CModel* pDoc = GetDocument();
+	m_selectedObject = NULL;
+	for (unsigned int i = 0; i < pDoc->GetNumberOfFigures(); ++i)
+	{
+		if (pDoc->GetFigureAt(i)->IsOnFigure(point.x, point.y))
+		{
+			m_selectedObject = pDoc->GetFigureAt(i);
+		}
+	}
+	if (m_selectedObject)
+	{
+		CPoint top_left(m_selectedObject->GetCenterX() - m_selectedObject->GetWidth() / 2, m_selectedObject->GetCenterY() - m_selectedObject->GetHeight() / 2);
+		CPoint bottom_right(m_selectedObject->GetCenterX() + m_selectedObject->GetWidth() / 2, m_selectedObject->GetCenterY() + m_selectedObject->GetHeight() / 2);
+		CRect rect(top_left, bottom_right);
+		m_tracker = CRectTrackerUpdate(rect, CRectTracker::hatchedBorder | CRectTracker::resizeOutside | CRectTracker::resizeInside, this);
+		m_tracker.m_sizeMin = CSize(100, 100);
+	}
+	else
+	{
+		m_tracker = CRectTrackerUpdate();
 	}
 	InvalidateRect(NULL);
 }

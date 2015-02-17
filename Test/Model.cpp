@@ -65,7 +65,6 @@ void CModel::Serialize(CArchive& ar)
 {
 	if (ar.IsStoring())
 	{
-		// TODO: add storing code here
 		TiXmlDocument doc;
 		TiXmlDeclaration * decl = new TiXmlDeclaration("1.0", "", "");
 		doc.LinkEndChild(decl);
@@ -93,31 +92,37 @@ void CModel::Serialize(CArchive& ar)
 		m_figures.clear();
 		CTestView::GetView()->GetController()->Reset();
 		CFile * pFile = ar.GetFile();
-		char* str = new char[pFile->GetLength() + 1];
-		pFile->Read(str, pFile->GetLength() + 1);
-		TiXmlDocument doc;
-		doc.Parse(str);
-		TiXmlElement* root = doc.RootElement();
-		if (root)
+		char* str = NULL;
+		try
 		{
-			TiXmlElement* figure = root->FirstChildElement("figure");
-			while (figure)
+			str = new char[pFile->GetLength() + 1];
+			pFile->Read(str, pFile->GetLength() + 1);
+			TiXmlDocument doc;
+			doc.Parse(str);
+			TiXmlElement* root = doc.RootElement();
+			if (root)
 			{
-				int x = atoi(figure->Attribute("x"));
-				int y = atoi(figure->Attribute("y"));
-				unsigned int width = atoi(figure->Attribute("width"));
-				unsigned int height = atoi(figure->Attribute("height"));
-				std::string type = figure->Attribute("type");
-				std::shared_ptr<IFigure> fig;
-				if (type == "Rectangle") fig.reset(new CRectangle(x, y, width, height));
-				if (type == "Triangle") fig.reset(new CTriangle(x, y, width, height));
-				if (type == "Circle") fig.reset(new CCircle(x, y, width, height));
-				AddFigure(fig);
-				figure = figure->NextSiblingElement("figure");
+				TiXmlElement* figure = root->FirstChildElement("figure");
+				while (figure)
+				{
+					int x = atoi(figure->Attribute("x"));
+					int y = atoi(figure->Attribute("y"));
+					unsigned int width = atoi(figure->Attribute("width"));
+					unsigned int height = atoi(figure->Attribute("height"));
+					std::string type = figure->Attribute("type");
+					std::shared_ptr<IFigure> fig;
+					if (type == "Rectangle") fig.reset(new CRectangle(x, y, width, height));
+					if (type == "Triangle") fig.reset(new CTriangle(x, y, width, height));
+					if (type == "Circle") fig.reset(new CCircle(x, y, width, height));
+					AddFigure(fig);
+					figure = figure->NextSiblingElement("figure");
+				}
 			}
+			doc.Clear();
 		}
-		doc.Clear();
-		delete[] str;
+		catch (std::exception) {}
+		if (str) delete[] str;
+		CTestView::GetView()->OnModelChange();
 	}
 }
 
