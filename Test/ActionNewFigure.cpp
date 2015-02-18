@@ -1,20 +1,17 @@
 #include "stdafx.h"
 #include "ActionNewFigure.h"
-#include "Model.h"
 
-CActionNewFigure::CActionNewFigure(std::shared_ptr<IFigure> figure)
-	:m_figure(figure)
+CActionNewFigure::CActionNewFigure(IModel* model, std::shared_ptr<IFigure> figure)
+	:m_figure(figure), m_pModel(model)
 {
 }
 
 void CActionNewFigure::Redo() const
 {
-	CModel* pDoc = CModel::GetModel();
-	pDoc->AddFigure(m_figure);
+	m_pModel->AddFigure(m_figure);
 }
 
 void CActionNewFigure::Undo() const
 {
-	CModel* pDoc = CModel::GetModel();
-	pDoc->RemoveFigure(m_figure);
+	m_pModel->Remove(m_figure);
 }

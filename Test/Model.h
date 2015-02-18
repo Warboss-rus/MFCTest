@@ -14,9 +14,11 @@
 #pragma once
 #include <vector>
 #include <memory>
-#include "IFigure.h"
+#include "IModel.h"
+#include "IAction.h"
+#include <functional>
 
-class CModel : public CDocument
+class CModel : public CDocument, IModel
 {
 public:
 	virtual ~CModel();
@@ -27,10 +29,27 @@ public:
 	unsigned int GetNumberOfFigures() const;
 	const std::shared_ptr<IFigure> GetFigureAt(unsigned int index) const;
 	static CModel * GetModel();
+	void AddNewRectangle(int centerX, int centerY, unsigned int width, unsigned int height);
+	void AddNewCircle(int centerX, int centerY, unsigned int width, unsigned int height);
+	void AddNewTriangle(int centerX, int centerY, unsigned int width, unsigned int height);
+	void Remove(std::shared_ptr<IFigure> figure);
+	void MoveFigure(std::shared_ptr<IFigure> figure, int deltaX, int deltaY);
+	void ResizeFigure(std::shared_ptr<IFigure> figure, int deltaWidth, int deltaHeight);
+	void Undo();
+	void Redo();
+	bool CanUndo() const;
+	bool CanRedo() const;
+	void SetOnChangeCallback(std::function<void()> callback);
 protected:
 	CModel();
 	DECLARE_DYNCREATE(CModel)
 	DECLARE_MESSAGE_MAP()
 private:
+	void Reset();
+	void OnChange();
+	void AddAction(IAction* action, bool execute = true);
 	std::vector<std::shared_ptr<IFigure>> m_figures;
+	std::vector<std::unique_ptr<IAction>> m_actions;
+	int m_currentActionIndex;
+	std::function<void()> m_onChangeCallback;
 };

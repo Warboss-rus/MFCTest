@@ -15,7 +15,6 @@
 #pragma once
 #include "RectTrackerUpdate.h"
 #include "Model.h"
-#include "Controller.h"
 
 
 class CTestView : public CScrollView
@@ -26,9 +25,6 @@ public:
 	virtual void OnDraw(CDC* pDC);  // overridden to draw this view
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 	void Update();
-	void OnModelChange();
-	static CTestView * GetView();
-	CController * GetController();
 
 protected: // create from serialization only
 	CTestView();
@@ -57,6 +53,5 @@ private:
 	std::shared_ptr<IFigure> m_selectedObject;
 	CRectTrackerUpdate m_tracker;
 	CRect m_prevRect;
-	CController m_controller;
 };
 

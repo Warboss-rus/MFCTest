@@ -105,13 +105,13 @@
     <ClInclude Include="ActionMoveFigure.h" />
     <ClInclude Include="ActionNewFigure.h" />
     <ClInclude Include="ActionResizeFigure.h" />
-    <ClInclude Include="Controller.h" />
     <ClInclude Include="Figure.h" />
     <ClInclude Include="FigureCircle.h" />
     <ClInclude Include="FigureRectangle.h" />
     <ClInclude Include="FigureTriangle.h" />
     <ClInclude Include="IAction.h" />
     <ClInclude Include="IFigure.h" />
+    <ClInclude Include="IModel.h" />
     <ClInclude Include="MainFrm.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="RectTrackerUpdate.h" />
@@ -127,7 +127,6 @@
     <ClCompile Include="ActionMoveFigure.cpp" />
     <ClCompile Include="ActionNewFigure.cpp" />
     <ClCompile Include="ActionResizeFigure.cpp" />
-    <ClCompile Include="Controller.cpp" />
     <ClCompile Include="Figure.cpp" />
     <ClCompile Include="FigureCircle.cpp" />
     <ClCompile Include="FigureRectangle.cpp" />

@@ -171,17 +171,17 @@ CModel* CTestView::GetDocument() const // non-debug version is inline
 
 void CTestView::OnNewRectangle()
 {
-	m_controller.AddNewRectangle(320, 240, 100, 100);
+	GetDocument()->AddNewRectangle(320, 240, 100, 100);
 }
 
 void CTestView::OnNewTriangle()
 {
-	m_controller.AddNewTriangle(320, 240, 100, 100);
+	GetDocument()->AddNewTriangle(320, 240, 100, 100);
 }
 
 void CTestView::OnNewCircle()
 {
-	m_controller.AddNewCircle(320, 240, 100, 100);
+	GetDocument()->AddNewCircle(320, 240, 100, 100);
 }
 
 void CTestView::OnLButtonDown(UINT nFlags, CPoint point)
@@ -195,11 +195,11 @@ void CTestView::OnLButtonDown(UINT nFlags, CPoint point)
 			m_selectedObject->Resize(m_tracker.m_rect.Width(), m_tracker.m_rect.Height());
 			if (m_tracker.m_rect.CenterPoint() != m_prevRect.CenterPoint())
 			{
-				m_controller.MoveFigure(m_selectedObject, m_tracker.m_rect.CenterPoint().x - m_prevRect.CenterPoint().x, m_tracker.m_rect.CenterPoint().y - m_prevRect.CenterPoint().y);
+				GetDocument()->MoveFigure(m_selectedObject, m_tracker.m_rect.CenterPoint().x - m_prevRect.CenterPoint().x, m_tracker.m_rect.CenterPoint().y - m_prevRect.CenterPoint().y);
 			}
 			if (m_tracker.m_rect.Width() != m_prevRect.Width() || m_tracker.m_rect.Height() != m_prevRect.Height())
 			{
-				m_controller.ResizeFigure(m_selectedObject, m_tracker.m_rect.Width() - m_prevRect.Width(), m_tracker.m_rect.Height() - m_prevRect.Height());
+				GetDocument()->ResizeFigure(m_selectedObject, m_tracker.m_rect.Width() - m_prevRect.Width(), m_tracker.m_rect.Height() - m_prevRect.Height());
 			}
 		}
 		InvalidateRect(NULL);
@@ -254,40 +254,22 @@ void CTestView::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
 	if (nChar == VK_DELETE)
 	{
-		m_controller.RemoveFigure(m_selectedObject);
+		GetDocument()->RemoveFigure(m_selectedObject);
 		m_selectedObject.reset();
 		m_tracker = CRectTrackerUpdate();
 	}
 }
 
-void CTestView::OnModelChange()
-{
-	GetDocument()->SetModifiedFlag();
-	InvalidateRect(NULL);
-}
-
 void CTestView::OnEditUndo()
 {
-	m_controller.Undo();
+	GetDocument()->Undo();
 	m_selectedObject.reset();
 }
 
 void CTestView::OnEditRedo()
 {
-	m_controller.Redo();
+	GetDocument()->Redo();
 	m_selectedObject.reset();
-}
-
-CTestView * CTestView::GetView()
-{
-	CFrameWnd * pFrame = (CFrameWnd *)(AfxGetApp()->m_pMainWnd);
-	if (!pFrame) return NULL;
-	return (CTestView*)pFrame->GetActiveView();
-}
-
-CController * CTestView::GetController()
-{
-	return &m_controller;
 }
 
 void CTestView::OnSize(UINT nType, int cx, int cy)
@@ -298,6 +280,8 @@ void CTestView::OnSize(UINT nType, int cx, int cy)
 void CTestView::OnInitialUpdate()
 {
 	SetScrollSizes(MM_TEXT, CSize(640, 480));
+	CModel * model = GetDocument();
+	model->SetOnChangeCallback([this]{InvalidateRect(NULL); });
 }
 
 void CTestView::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)

@@ -19,8 +19,11 @@
 #include "FigureRectangle.h"
 #include "FigureCircle.h"
 #include "FigureTriangle.h"
+#include "ActionNewFigure.h"
+#include "ActionDeleteFigure.h"
+#include "ActionMoveFigure.h"
+#include "ActionResizeFigure.h"
 #include "tinyxml.h"
-#include "TestView.h"
 
 // CModel
 
@@ -32,7 +35,7 @@ END_MESSAGE_MAP()
 
 // CModel construction/destruction
 
-CModel::CModel()
+CModel::CModel():m_currentActionIndex(-1)
 {
 	// TODO: add one-time construction code here
 
@@ -49,9 +52,7 @@ BOOL CModel::OnNewDocument()
 
 	// TODO: add reinitialization code here
 	// (SDI documents will reuse this document)
-	m_figures.clear();
-	CTestView * view = CTestView::GetView();
-	if(view) view->GetController()->Reset();
+	Reset();
 
 	return TRUE;
 }
@@ -72,13 +73,20 @@ void CModel::Serialize(CArchive& ar)
 		doc.LinkEndChild(element);
 		for (unsigned int i = 0; i < m_figures.size(); ++i)
 		{
-			TiXmlElement * figure = new TiXmlElement("figure");
-			figure->SetAttribute("x", m_figures[i]->GetCenterX());
-			figure->SetAttribute("y", m_figures[i]->GetCenterY());
-			figure->SetAttribute("width", m_figures[i]->GetWidth());
-			figure->SetAttribute("height", m_figures[i]->GetHeight());
-			figure->SetAttribute("type", m_figures[i]->GetType());
-			element->LinkEndChild(figure);
+			TiXmlElement * figure = NULL;
+			try {
+				figure = new TiXmlElement("figure");
+				figure->SetAttribute("x", m_figures[i]->GetCenterX());
+				figure->SetAttribute("y", m_figures[i]->GetCenterY());
+				figure->SetAttribute("width", m_figures[i]->GetWidth());
+				figure->SetAttribute("height", m_figures[i]->GetHeight());
+				figure->SetAttribute("type", m_figures[i]->GetType());
+				element->LinkEndChild(figure);
+			}
+			catch (std::exception)
+			{
+				delete figure;
+			}
 		}
 		TiXmlPrinter printer;
 		printer.SetIndent("    ");
@@ -89,8 +97,7 @@ void CModel::Serialize(CArchive& ar)
 	else
 	{
 		// TODO: add loading code here
-		m_figures.clear();
-		CTestView::GetView()->GetController()->Reset();
+		Reset();
 		CFile * pFile = ar.GetFile();
 		char* str = NULL;
 		try
@@ -122,7 +129,7 @@ void CModel::Serialize(CArchive& ar)
 		}
 		catch (std::exception) {}
 		if (str) delete[] str;
-		CTestView::GetView()->OnModelChange();
+		OnChange();
 	}
 }
 
@@ -143,7 +150,7 @@ const std::shared_ptr<IFigure> CModel::GetFigureAt(unsigned int index) const
 	return m_figures[index];
 }
 
-void CModel::RemoveFigure(std::shared_ptr<IFigure> figure)
+void CModel::Remove(std::shared_ptr<IFigure> figure)
 {
 	for (unsigned int i = 0; i < m_figures.size(); ++i)
 	{
@@ -160,4 +167,93 @@ CModel * CModel::GetModel()
 {
 	CFrameWnd * pFrame = (CFrameWnd *)(AfxGetApp()->m_pMainWnd);
 	return (CModel *)pFrame->GetActiveDocument();
+}
+
+void CModel::AddNewRectangle(int centerX, int centerY, unsigned int width, unsigned int height)
+{
+	std::shared_ptr<IFigure> figure(new CRectangle(centerX, centerY, width, height));
+	AddAction(new CActionNewFigure(this, figure));
+}
+
+void CModel::AddNewCircle(int centerX, int centerY, unsigned int width, unsigned int height)
+{
+	std::shared_ptr<IFigure> figure(new CCircle(centerX, centerY, width, height));
+	AddAction(new CActionNewFigure(this, figure));
+}
+
+void CModel::AddNewTriangle(int centerX, int centerY, unsigned int width, unsigned int height)
+{
+	std::shared_ptr<IFigure> figure(new CTriangle(centerX, centerY, width, height));
+	AddAction(new CActionNewFigure(this, figure));
+}
+
+void CModel::RemoveFigure(std::shared_ptr<IFigure> figure)
+{
+	AddAction(new CActionDeleteFigure(this, figure));
+}
+
+void CModel::MoveFigure(std::shared_ptr<IFigure> figure, int deltaX, int deltaY)
+{
+	AddAction(new CActionMoveFigure(figure, deltaX, deltaY), false);
+}
+
+void CModel::ResizeFigure(std::shared_ptr<IFigure> figure, int deltaWidth, int deltaHeight)
+{
+	AddAction(new CActionResizeFigure(figure, deltaWidth, deltaHeight), false);
+}
+
+void CModel::AddAction(IAction* action, bool execute)
+{
+	if (m_currentActionIndex != m_actions.size() - 1)
+	{
+		m_actions.erase(m_actions.begin() + m_currentActionIndex, m_actions.end());
+	}
+	if (execute) action->Redo();
+	m_actions.push_back(std::unique_ptr<IAction>(action));
+	m_currentActionIndex = m_actions.size() - 1;
+	OnChange();
+}
+
+void CModel::Undo()
+{
+	if (m_currentActionIndex < 0) return;
+	m_actions[m_currentActionIndex]->Undo();
+	m_currentActionIndex--;
+	OnChange();
+}
+
+void CModel::Redo()
+{
+	if (!CanRedo()) return;
+	m_currentActionIndex++;
+	m_actions[m_currentActionIndex]->Redo();
+	OnChange();
+}
+
+bool CModel::CanRedo() const
+{
+	return m_currentActionIndex < (int)m_actions.size() - 1;
+}
+
+bool CModel::CanUndo() const
+{
+	return m_currentActionIndex >= 0;
+}
+
+void CModel::Reset()
+{
+	m_figures.clear();
+	m_actions.clear();
+	m_currentActionIndex = -1;
+}
+
+void CModel::OnChange()
+{
+	SetModifiedFlag();
+	if (m_onChangeCallback) m_onChangeCallback();
+}
+
+void CModel::SetOnChangeCallback(std::function<void()> callback)
+{
+	m_onChangeCallback = callback;
 }
