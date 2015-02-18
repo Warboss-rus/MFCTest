@@ -6,7 +6,7 @@ CRectangle::CRectangle(int centerX, int centerY, unsigned int width, unsigned in
 {
 }
 
-bool CRectangle::IsOnFigure(unsigned int x, unsigned int y) const
+bool CRectangle::IsOnFigure(int x, int y) const
 {
 	int left = m_centerX - m_width / 2;
 	int right = m_centerX + m_width / 2;

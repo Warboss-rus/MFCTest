@@ -5,7 +5,7 @@ class CFigure : public IFigure
 {
 public:
 	CFigure(int centerX, int centerY, unsigned int width, unsigned int height);
-	virtual bool IsOnFigure(unsigned int x, unsigned int y) const = 0;
+	virtual bool IsOnFigure(int x, int y) const = 0;
 	virtual std::string GetType() const = 0;
 	int GetCenterX() const;
 	int GetCenterY() const;

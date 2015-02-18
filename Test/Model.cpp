@@ -73,20 +73,14 @@ void CModel::Serialize(CArchive& ar)
 		doc.LinkEndChild(element);
 		for (unsigned int i = 0; i < m_figures.size(); ++i)
 		{
-			TiXmlElement * figure = NULL;
-			try {
-				figure = new TiXmlElement("figure");
-				figure->SetAttribute("x", m_figures[i]->GetCenterX());
-				figure->SetAttribute("y", m_figures[i]->GetCenterY());
-				figure->SetAttribute("width", m_figures[i]->GetWidth());
-				figure->SetAttribute("height", m_figures[i]->GetHeight());
-				figure->SetAttribute("type", m_figures[i]->GetType());
-				element->LinkEndChild(figure);
-			}
-			catch (std::exception)
-			{
-				delete figure;
-			}
+			TiXmlElement * figure = new TiXmlElement("figure");
+			element->LinkEndChild(figure);
+			IFigure * pFigure = m_figures[i].get();
+			figure->SetAttribute("x", pFigure->GetCenterX());
+			figure->SetAttribute("y", pFigure->GetCenterY());
+			figure->SetAttribute("width", pFigure->GetWidth());
+			figure->SetAttribute("height", pFigure->GetHeight());
+			figure->SetAttribute("type", pFigure->GetType());
 		}
 		TiXmlPrinter printer;
 		printer.SetIndent("    ");
@@ -99,36 +93,32 @@ void CModel::Serialize(CArchive& ar)
 		// TODO: add loading code here
 		Reset();
 		CFile * pFile = ar.GetFile();
-		char* str = NULL;
-		try
+		std::vector<char> str;
+		unsigned int size = min(static_cast<unsigned int>(pFile->GetLength() + 1), UINT_MAX);
+		str.resize(size);
+		pFile->Read(&str[0], size);
+		TiXmlDocument doc;
+		doc.Parse(&str[0]);
+		TiXmlElement* root = doc.RootElement();
+		if (root)
 		{
-			str = new char[pFile->GetLength() + 1];
-			pFile->Read(str, pFile->GetLength() + 1);
-			TiXmlDocument doc;
-			doc.Parse(str);
-			TiXmlElement* root = doc.RootElement();
-			if (root)
+			TiXmlElement* figure = root->FirstChildElement("figure");
+			while (figure)
 			{
-				TiXmlElement* figure = root->FirstChildElement("figure");
-				while (figure)
-				{
-					int x = atoi(figure->Attribute("x"));
-					int y = atoi(figure->Attribute("y"));
-					unsigned int width = atoi(figure->Attribute("width"));
-					unsigned int height = atoi(figure->Attribute("height"));
-					std::string type = figure->Attribute("type");
-					std::shared_ptr<IFigure> fig;
-					if (type == "Rectangle") fig.reset(new CRectangle(x, y, width, height));
-					if (type == "Triangle") fig.reset(new CTriangle(x, y, width, height));
-					if (type == "Circle") fig.reset(new CCircle(x, y, width, height));
-					AddFigure(fig);
-					figure = figure->NextSiblingElement("figure");
-				}
+				int x = atoi(figure->Attribute("x"));
+				int y = atoi(figure->Attribute("y"));
+				unsigned int width = atoi(figure->Attribute("width"));
+				unsigned int height = atoi(figure->Attribute("height"));
+				std::string type = figure->Attribute("type");
+				std::shared_ptr<IFigure> fig;
+				if (type == "Rectangle") fig.reset(new CRectangle(x, y, width, height));
+				if (type == "Triangle") fig.reset(new CTriangle(x, y, width, height));
+				if (type == "Circle") fig.reset(new CCircle(x, y, width, height));
+				AddFigure(fig);
+				figure = figure->NextSiblingElement("figure");
 			}
-			doc.Clear();
 		}
-		catch (std::exception) {}
-		if (str) delete[] str;
+		doc.Clear();
 		OnChange();
 	}
 }

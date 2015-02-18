@@ -11,7 +11,7 @@ int sign(int p1x, int p1y, int p2x, int p2y, int p3x, int p3y)
 	return (p1x - p3x) * (p2y - p3y) - (p2x - p3x) * (p1y - p3y);
 }
 
-bool CTriangle::IsOnFigure(unsigned int x, unsigned int y) const
+bool CTriangle::IsOnFigure(int x, int y) const
 {
 	int left = m_centerX - m_width / 2;
 	int right = m_centerX + m_width / 2;

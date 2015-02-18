@@ -6,7 +6,7 @@ CCircle::CCircle(int centerX, int centerY, unsigned int width, unsigned int heig
 {
 }
 
-bool CCircle::IsOnFigure(unsigned int x, unsigned int y) const
+bool CCircle::IsOnFigure(int x, int y) const
 {
 	double a = (double)m_width / 2.0;
 	double b = (double)m_height / 2.0;
