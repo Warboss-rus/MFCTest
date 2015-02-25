@@ -6,9 +6,9 @@
 class CActionNewFigure : public IAction
 {
 public:
-	CActionNewFigure(IModel * model, std::shared_ptr<IFigure> figure);
-	void Undo() const;
-	void Redo() const;
+	CActionNewFigure(IModel * model, std::shared_ptr<IFigure> const& figure);
+	void Undo();
+	void Redo();
 private:
 	std::shared_ptr<IFigure> m_figure;
 	IModel * m_pModel;

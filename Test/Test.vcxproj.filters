@@ -69,13 +69,10 @@
     <ClInclude Include="ActionDeleteFigure.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ActionMoveFigure.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ActionResizeFigure.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="IModel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ActionMoveResizeFigure.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -125,10 +122,7 @@
     <ClCompile Include="ActionDeleteFigure.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ActionMoveFigure.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ActionResizeFigure.cpp">
+    <ClCompile Include="ActionMoveResizeFigure.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

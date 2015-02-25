@@ -13,9 +13,9 @@
 //
 
 #pragma once
+#include <map>
 #include "RectTrackerUpdate.h"
 #include "Model.h"
-
 
 class CTestView : public CScrollView
 {
@@ -50,6 +50,7 @@ protected: // create from serialization only
 	DECLARE_MESSAGE_MAP()
 private:
 	void DrawFigures(CDC * pDC, CRect * rect);
+	std::map<std::string, std::function<void(CDC *, int, int, int, int)>> m_drawingFunctions;
 	std::shared_ptr<IFigure> m_selectedObject;
 	CRectTrackerUpdate m_tracker;
 	CRect m_prevRect;

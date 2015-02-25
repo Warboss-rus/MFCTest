@@ -21,8 +21,7 @@
 #include "FigureTriangle.h"
 #include "ActionNewFigure.h"
 #include "ActionDeleteFigure.h"
-#include "ActionMoveFigure.h"
-#include "ActionResizeFigure.h"
+#include "ActionMoveResizeFigure.h"
 #include "tinyxml.h"
 
 // CModel
@@ -125,7 +124,7 @@ void CModel::Serialize(CArchive& ar)
 
 // CModel commands
 
-void CModel::AddFigure(std::shared_ptr<IFigure> figure)
+void CModel::AddFigure(std::shared_ptr<IFigure> const& figure)
 {
 	m_figures.push_back(figure);
 }
@@ -140,7 +139,7 @@ const std::shared_ptr<IFigure> CModel::GetFigureAt(unsigned int index) const
 	return m_figures[index];
 }
 
-void CModel::Remove(std::shared_ptr<IFigure> figure)
+void CModel::Remove(std::shared_ptr<IFigure> const& figure)
 {
 	for (unsigned int i = 0; i < m_figures.size(); ++i)
 	{
@@ -177,19 +176,14 @@ void CModel::AddNewTriangle(int centerX, int centerY, unsigned int width, unsign
 	AddAction(new CActionNewFigure(this, figure));
 }
 
-void CModel::RemoveFigure(std::shared_ptr<IFigure> figure)
+void CModel::RemoveFigure(std::shared_ptr<IFigure> const& figure)
 {
 	AddAction(new CActionDeleteFigure(this, figure));
 }
 
-void CModel::MoveFigure(std::shared_ptr<IFigure> figure, int deltaX, int deltaY)
+void CModel::MoveAndResizeFigure(std::shared_ptr<IFigure> const& figure, int deltaX, int deltaY, int deltaWidth, int deltaHeight)
 {
-	AddAction(new CActionMoveFigure(figure, deltaX, deltaY), false);
-}
-
-void CModel::ResizeFigure(std::shared_ptr<IFigure> figure, int deltaWidth, int deltaHeight)
-{
-	AddAction(new CActionResizeFigure(figure, deltaWidth, deltaHeight), false);
+	AddAction(new CActionMoveResizeFigure(figure, deltaWidth, deltaHeight, deltaX, deltaY), false);
 }
 
 void CModel::AddAction(IAction* action, bool execute)

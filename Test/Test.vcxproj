@@ -102,9 +102,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ActionDeleteFigure.h" />
-    <ClInclude Include="ActionMoveFigure.h" />
     <ClInclude Include="ActionNewFigure.h" />
-    <ClInclude Include="ActionResizeFigure.h" />
+    <ClInclude Include="ActionMoveResizeFigure.h" />
     <ClInclude Include="Figure.h" />
     <ClInclude Include="FigureCircle.h" />
     <ClInclude Include="FigureRectangle.h" />
@@ -124,9 +123,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ActionDeleteFigure.cpp" />
-    <ClCompile Include="ActionMoveFigure.cpp" />
     <ClCompile Include="ActionNewFigure.cpp" />
-    <ClCompile Include="ActionResizeFigure.cpp" />
+    <ClCompile Include="ActionMoveResizeFigure.cpp" />
     <ClCompile Include="Figure.cpp" />
     <ClCompile Include="FigureCircle.cpp" />
     <ClCompile Include="FigureRectangle.cpp" />

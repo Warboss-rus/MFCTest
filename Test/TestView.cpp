@@ -27,6 +27,8 @@
 #define new DEBUG_NEW
 #endif
 
+using namespace std::placeholders;
+
 
 // CTestView
 
@@ -50,11 +52,36 @@ BEGIN_MESSAGE_MAP(CTestView, CView)
 	ON_WM_LBUTTONUP()
 END_MESSAGE_MAP()
 
+void DrawRectangle(CDC* pDC, int left, int right, int top, int bottom)
+{
+	pDC->Rectangle(left, top, right, bottom);
+}
+
+void DrawCircle(CDC* pDC, int left, int right, int top, int bottom)
+{
+	pDC->Ellipse(left, top, right, bottom);
+}
+
+void DrawTriangle(CDC* pDC, int left, int right, int top, int bottom)
+{
+	CPoint pts[3];
+	pts[0].x = left;
+	pts[0].y = bottom;
+	pts[1].x = (right + left) / 2;
+	pts[1].y = top;
+	pts[2].x = right;
+	pts[2].y = bottom;
+	pDC->Polygon(pts, 3);
+}
+
 // CTestView construction/destruction
 
 CTestView::CTestView()
 {
 	// TODO: add construction code here
+	m_drawingFunctions["Rectangle"] = std::bind<void>(DrawRectangle, _1, _2, _3, _4, _5);
+	m_drawingFunctions["Circle"] = std::bind<void>(DrawCircle, _1, _2, _3, _4, _5);
+	m_drawingFunctions["Triangle"] = std::bind<void>(DrawTriangle, _1, _2, _3, _4, _5);
 }
 
 CTestView::~CTestView()
@@ -105,40 +132,32 @@ void CTestView::OnDraw(CDC* DC)
 void CTestView::DrawFigures(CDC * pDC, CRect * rect)
 {
 	CModel* pDoc = GetDocument();
+
 	pDC->Rectangle(0, 0, rect->Width(), rect->Height());
+
 	CBrush brush;
 	brush.CreateSolidBrush(RGB(255, 255, 0));
 	CBrush* pOldBrush = pDC->SelectObject(&brush);
+
 	CPen penBlack;
 	penBlack.CreatePen(PS_SOLID, 3, RGB(255, 0, 0));
 	CPen* pOldPen = pDC->SelectObject(&penBlack);
+
 	CPoint scroll = GetScrollPosition();
+
 	for (unsigned int i = 0; i < pDoc->GetNumberOfFigures(); ++i)
 	{
 		std::shared_ptr<IFigure> m_figure = pDoc->GetFigureAt(i);
+
 		int left = -scroll.x + m_figure->GetCenterX() - m_figure->GetWidth() / 2;
 		int right = -scroll.x + m_figure->GetCenterX() + m_figure->GetWidth() / 2;
 		int top = -scroll.y + m_figure->GetCenterY() - m_figure->GetHeight() / 2;
 		int bottom = -scroll.y + m_figure->GetCenterY() + m_figure->GetHeight() / 2;
-		if (m_figure->GetType() == "Rectangle")
-		{
-			pDC->Rectangle(left, top, right, bottom);
-		}
-		if (m_figure->GetType() == "Circle")
-		{
-			pDC->Ellipse(left, top, right, bottom);
-		}
-		if (m_figure->GetType() == "Triangle")
-		{
-			CPoint pts[3];
-			pts[0].x = left;
-			pts[0].y = bottom;
-			pts[1].x = m_figure->GetCenterX();
-			pts[1].y = top;
-			pts[2].x = right;
-			pts[2].y = bottom;
-			pDC->Polygon(pts, 3);
-		}
+
+		//Find a registered drawing function and execute it
+		auto it = m_drawingFunctions.find(m_figure->GetType());
+		if (it != m_drawingFunctions.end())
+			it->second(pDC, left, right, top, bottom);
 	}
 
 	if (m_selectedObject)
@@ -191,15 +210,17 @@ void CTestView::OnLButtonDown(UINT nFlags, CPoint point)
 		m_prevRect = m_tracker.m_rect;
 		if(m_tracker.Track(this, point, FALSE))
 		{
-			m_selectedObject->SetCenter(m_tracker.m_rect.CenterPoint().x, m_tracker.m_rect.CenterPoint().y);
-			m_selectedObject->Resize(m_tracker.m_rect.Width(), m_tracker.m_rect.Height());
-			if (m_tracker.m_rect.CenterPoint() != m_prevRect.CenterPoint())
+			CPoint const& centerPoint = m_tracker.m_rect.CenterPoint();
+			int width = m_tracker.m_rect.Width();
+			int height = m_tracker.m_rect.Height();
+			m_selectedObject->SetCenter(centerPoint.x, centerPoint.y);
+			m_selectedObject->Resize(width, height);
+			if (m_tracker.m_rect != m_prevRect)
 			{
-				GetDocument()->MoveFigure(m_selectedObject, m_tracker.m_rect.CenterPoint().x - m_prevRect.CenterPoint().x, m_tracker.m_rect.CenterPoint().y - m_prevRect.CenterPoint().y);
-			}
-			if (m_tracker.m_rect.Width() != m_prevRect.Width() || m_tracker.m_rect.Height() != m_prevRect.Height())
-			{
-				GetDocument()->ResizeFigure(m_selectedObject, m_tracker.m_rect.Width() - m_prevRect.Width(), m_tracker.m_rect.Height() - m_prevRect.Height());
+				CPoint deltaCenter = centerPoint - m_prevRect.CenterPoint();
+				int deltaWidth = width - m_prevRect.Width();
+				int deltaHeight = height - m_prevRect.Height();
+				GetDocument()->MoveAndResizeFigure(m_selectedObject, deltaCenter.x, deltaCenter.y, deltaWidth, deltaHeight);
 			}
 		}
 		InvalidateRect(NULL);
