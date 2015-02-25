@@ -47,6 +47,8 @@ protected: // create from serialization only
 	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnCommandUpdateUndo(CCmdUI * pCmdUI);
+	afx_msg void OnCommandUpdateRedo(CCmdUI * pCmdUI);
 	DECLARE_MESSAGE_MAP()
 private:
 	void DrawFigures(CDC * pDC, CRect * rect);
@@ -54,5 +56,6 @@ private:
 	std::shared_ptr<IFigure> m_selectedObject;
 	CRectTrackerUpdate m_tracker;
 	CRect m_prevRect;
+	CPoint m_prevScrollPosition;
 };
 

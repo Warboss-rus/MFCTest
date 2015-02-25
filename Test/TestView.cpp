@@ -50,6 +50,8 @@ BEGIN_MESSAGE_MAP(CTestView, CView)
 	ON_WM_HSCROLL()
 	ON_WM_VSCROLL()
 	ON_WM_LBUTTONUP()
+	ON_UPDATE_COMMAND_UI(ID_EDIT_UNDO, OnCommandUpdateUndo)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_REDO, OnCommandUpdateRedo)
 END_MESSAGE_MAP()
 
 void DrawRectangle(CDC* pDC, int left, int right, int top, int bottom)
@@ -210,7 +212,7 @@ void CTestView::OnLButtonDown(UINT nFlags, CPoint point)
 		m_prevRect = m_tracker.m_rect;
 		if(m_tracker.Track(this, point, FALSE))
 		{
-			CPoint const& centerPoint = m_tracker.m_rect.CenterPoint();
+			CPoint const& centerPoint = m_tracker.m_rect.CenterPoint() + GetScrollPosition();
 			int width = m_tracker.m_rect.Width();
 			int height = m_tracker.m_rect.Height();
 			m_selectedObject->SetCenter(centerPoint.x, centerPoint.y);
@@ -231,9 +233,10 @@ void CTestView::OnLButtonUp(UINT nFlags, CPoint point)
 {
 	CModel* pDoc = GetDocument();
 	m_selectedObject = NULL;
+	CPoint scrolledPoint = point + GetScrollPosition();
 	for (unsigned int i = 0; i < pDoc->GetNumberOfFigures(); ++i)
 	{
-		if (pDoc->GetFigureAt(i)->IsOnFigure(point.x, point.y))
+		if (pDoc->GetFigureAt(i)->IsOnFigure(scrolledPoint.x, scrolledPoint.y))
 		{
 			m_selectedObject = pDoc->GetFigureAt(i);
 		}
@@ -244,6 +247,7 @@ void CTestView::OnLButtonUp(UINT nFlags, CPoint point)
 		CPoint bottom_right(m_selectedObject->GetCenterX() + m_selectedObject->GetWidth() / 2, m_selectedObject->GetCenterY() + m_selectedObject->GetHeight() / 2);
 		CRect rect(top_left, bottom_right);
 		m_tracker = CRectTrackerUpdate(rect, CRectTracker::hatchedBorder | CRectTracker::resizeOutside | CRectTracker::resizeInside, this);
+		m_tracker.m_rect -= m_prevScrollPosition;
 		m_tracker.m_sizeMin = CSize(100, 100);
 	}
 	else
@@ -265,7 +269,8 @@ void CTestView::Update()
 {
 	if (m_selectedObject)
 	{
-		m_selectedObject->SetCenter(m_tracker.m_rect.CenterPoint().x, m_tracker.m_rect.CenterPoint().y);
+		CPoint centerPoint = m_tracker.m_rect.CenterPoint() + GetScrollPosition();
+		m_selectedObject->SetCenter(centerPoint.x, centerPoint.y);
 		m_selectedObject->Resize(m_tracker.m_rect.Width(), m_tracker.m_rect.Height());
 		InvalidateRect(NULL);
 	}
@@ -308,11 +313,25 @@ void CTestView::OnInitialUpdate()
 void CTestView::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
 	CScrollView::OnVScroll(nSBCode, nPos, pScrollBar);
+	m_tracker.m_rect -= (CPoint)(GetScrollPosition() - m_prevScrollPosition);
+	m_prevScrollPosition = GetScrollPosition();
 	Invalidate();
 }
 
 void CTestView::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
 	CScrollView::OnHScroll(nSBCode, nPos, pScrollBar);
+	m_tracker.m_rect -= (CPoint)(GetScrollPosition() - m_prevScrollPosition);
+	m_prevScrollPosition = GetScrollPosition();
 	Invalidate();
+}
+
+void CTestView::OnCommandUpdateUndo(CCmdUI * pCmdUI)
+{
+	pCmdUI->Enable(GetDocument()->CanUndo());
+}
+
+void CTestView::OnCommandUpdateRedo(CCmdUI * pCmdUI)
+{
+	pCmdUI->Enable(GetDocument()->CanRedo());
 }

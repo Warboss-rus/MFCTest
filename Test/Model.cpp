@@ -141,59 +141,52 @@ const std::shared_ptr<IFigure> CModel::GetFigureAt(unsigned int index) const
 
 void CModel::Remove(std::shared_ptr<IFigure> const& figure)
 {
-	for (unsigned int i = 0; i < m_figures.size(); ++i)
+	for (auto it = m_figures.begin(); it != m_figures.end(); ++it)
 	{
-		if (m_figures[i] == figure)
+		if (*it == figure)
 		{
-			std::swap(m_figures[i], m_figures.back());
-			m_figures.pop_back();
+			m_figures.erase(it);
 			return;
 		}
 	}
 }
 
-CModel * CModel::GetModel()
-{
-	CFrameWnd * pFrame = (CFrameWnd *)(AfxGetApp()->m_pMainWnd);
-	return (CModel *)pFrame->GetActiveDocument();
-}
-
 void CModel::AddNewRectangle(int centerX, int centerY, unsigned int width, unsigned int height)
 {
 	std::shared_ptr<IFigure> figure(new CRectangle(centerX, centerY, width, height));
-	AddAction(new CActionNewFigure(this, figure));
+	AddAction(std::make_unique<CActionNewFigure>(this, figure));
 }
 
 void CModel::AddNewCircle(int centerX, int centerY, unsigned int width, unsigned int height)
 {
 	std::shared_ptr<IFigure> figure(new CCircle(centerX, centerY, width, height));
-	AddAction(new CActionNewFigure(this, figure));
+	AddAction(std::make_unique<CActionNewFigure>(this, figure));
 }
 
 void CModel::AddNewTriangle(int centerX, int centerY, unsigned int width, unsigned int height)
 {
 	std::shared_ptr<IFigure> figure(new CTriangle(centerX, centerY, width, height));
-	AddAction(new CActionNewFigure(this, figure));
+	AddAction(std::make_unique<CActionNewFigure>(this, figure));
 }
 
 void CModel::RemoveFigure(std::shared_ptr<IFigure> const& figure)
 {
-	AddAction(new CActionDeleteFigure(this, figure));
+	AddAction(std::make_unique<CActionDeleteFigure>(this, figure));
 }
 
 void CModel::MoveAndResizeFigure(std::shared_ptr<IFigure> const& figure, int deltaX, int deltaY, int deltaWidth, int deltaHeight)
 {
-	AddAction(new CActionMoveResizeFigure(figure, deltaWidth, deltaHeight, deltaX, deltaY), false);
+	AddAction(std::make_unique<CActionMoveResizeFigure>(figure, deltaWidth, deltaHeight, deltaX, deltaY), false);
 }
 
-void CModel::AddAction(IAction* action, bool execute)
+void CModel::AddAction(std::unique_ptr<IAction> && action, bool execute)
 {
 	if (m_currentActionIndex != m_actions.size() - 1)
 	{
 		m_actions.erase(m_actions.begin() + m_currentActionIndex, m_actions.end());
 	}
 	if (execute) action->Redo();
-	m_actions.push_back(std::unique_ptr<IAction>(action));
+	m_actions.push_back(std::move(action));
 	m_currentActionIndex = m_actions.size() - 1;
 	OnChange();
 }
@@ -237,7 +230,7 @@ void CModel::OnChange()
 	if (m_onChangeCallback) m_onChangeCallback();
 }
 
-void CModel::SetOnChangeCallback(std::function<void()> callback)
+void CModel::SetOnChangeCallback(std::function<void()> const& callback)
 {
 	m_onChangeCallback = callback;
 }

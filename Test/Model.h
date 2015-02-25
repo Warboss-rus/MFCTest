@@ -18,7 +18,7 @@
 #include "IAction.h"
 #include <functional>
 
-class CModel : public CDocument, IModel
+class CModel : public CDocument, public IModel
 {
 public:
 	virtual ~CModel();
@@ -28,7 +28,6 @@ public:
 	void RemoveFigure(std::shared_ptr<IFigure> const& figure);
 	unsigned int GetNumberOfFigures() const;
 	const std::shared_ptr<IFigure> GetFigureAt(unsigned int index) const;
-	static CModel * GetModel();
 	void AddNewRectangle(int centerX, int centerY, unsigned int width, unsigned int height);
 	void AddNewCircle(int centerX, int centerY, unsigned int width, unsigned int height);
 	void AddNewTriangle(int centerX, int centerY, unsigned int width, unsigned int height);
@@ -38,7 +37,7 @@ public:
 	void Redo();
 	bool CanUndo() const;
 	bool CanRedo() const;
-	void SetOnChangeCallback(std::function<void()> callback);
+	void SetOnChangeCallback(std::function<void()> const& callback);
 protected:
 	CModel();
 	DECLARE_DYNCREATE(CModel)
@@ -46,7 +45,7 @@ protected:
 private:
 	void Reset();
 	void OnChange();
-	void AddAction(IAction* action, bool execute = true);
+	void AddAction(std::unique_ptr<IAction> && action, bool execute = true);
 	std::vector<std::shared_ptr<IFigure>> m_figures;
 	std::vector<std::unique_ptr<IAction>> m_actions;
 	int m_currentActionIndex;
