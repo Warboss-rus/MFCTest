@@ -193,16 +193,19 @@ CModel* CTestView::GetDocument() const // non-debug version is inline
 void CTestView::OnNewRectangle()
 {
 	GetDocument()->AddNewRectangle(320, 240, 100, 100);
+	UpdateScrollbars();
 }
 
 void CTestView::OnNewTriangle()
 {
 	GetDocument()->AddNewTriangle(320, 240, 100, 100);
+	UpdateScrollbars();
 }
 
 void CTestView::OnNewCircle()
 {
 	GetDocument()->AddNewCircle(320, 240, 100, 100);
+	UpdateScrollbars();
 }
 
 void CTestView::OnLButtonDown(UINT nFlags, CPoint point)
@@ -223,6 +226,7 @@ void CTestView::OnLButtonDown(UINT nFlags, CPoint point)
 				int deltaWidth = width - m_prevRect.Width();
 				int deltaHeight = height - m_prevRect.Height();
 				GetDocument()->MoveAndResizeFigure(m_selectedObject, deltaCenter.x, deltaCenter.y, deltaWidth, deltaHeight);
+				UpdateScrollbars();
 			}
 		}
 		InvalidateRect(NULL);
@@ -246,8 +250,8 @@ void CTestView::OnLButtonUp(UINT nFlags, CPoint point)
 		CPoint top_left(m_selectedObject->GetCenterX() - m_selectedObject->GetWidth() / 2, m_selectedObject->GetCenterY() - m_selectedObject->GetHeight() / 2);
 		CPoint bottom_right(m_selectedObject->GetCenterX() + m_selectedObject->GetWidth() / 2, m_selectedObject->GetCenterY() + m_selectedObject->GetHeight() / 2);
 		CRect rect(top_left, bottom_right);
+		rect -= GetScrollPosition();
 		m_tracker = CRectTrackerUpdate(rect, CRectTracker::hatchedBorder | CRectTracker::resizeOutside | CRectTracker::resizeInside, this);
-		m_tracker.m_rect -= m_prevScrollPosition;
 		m_tracker.m_sizeMin = CSize(100, 100);
 	}
 	else
@@ -283,19 +287,22 @@ void CTestView::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
 		GetDocument()->RemoveFigure(m_selectedObject);
 		m_selectedObject.reset();
 		m_tracker = CRectTrackerUpdate();
+		UpdateScrollbars();
 	}
 }
 
 void CTestView::OnEditUndo()
 {
-	GetDocument()->Undo();
+	GetDocument()->GetActionHandler()->Undo();
 	m_selectedObject.reset();
+	UpdateScrollbars();
 }
 
 void CTestView::OnEditRedo()
 {
-	GetDocument()->Redo();
+	GetDocument()->GetActionHandler()->Redo();
 	m_selectedObject.reset();
+	UpdateScrollbars();
 }
 
 void CTestView::OnSize(UINT nType, int cx, int cy)
@@ -305,7 +312,7 @@ void CTestView::OnSize(UINT nType, int cx, int cy)
 
 void CTestView::OnInitialUpdate()
 {
-	SetScrollSizes(MM_TEXT, CSize(640, 480));
+	SetScrollSizes(MM_TEXT, CSize(0, 0));
 	CModel * model = GetDocument();
 	model->SetOnChangeCallback([this]{InvalidateRect(NULL); });
 }
@@ -328,10 +335,24 @@ void CTestView::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 
 void CTestView::OnCommandUpdateUndo(CCmdUI * pCmdUI)
 {
-	pCmdUI->Enable(GetDocument()->CanUndo());
+	pCmdUI->Enable(GetDocument()->GetActionHandler()->CanUndo());
 }
 
 void CTestView::OnCommandUpdateRedo(CCmdUI * pCmdUI)
 {
-	pCmdUI->Enable(GetDocument()->CanRedo());
+	pCmdUI->Enable(GetDocument()->GetActionHandler()->CanRedo());
+}
+
+void CTestView::UpdateScrollbars()
+{
+	CModel * model = GetDocument();
+	int width = 0;
+	int height = 0;
+	for (int i = 0; i < model->GetNumberOfFigures(); ++i)
+	{
+		std::shared_ptr<IFigure> figure = model->GetFigureAt(i);
+		width = max(width, figure->GetCenterX() + figure->GetWidth() / 2 + 5);//additional 5 pixels so you can grab RectTracker
+		height = max(height, figure->GetCenterY() + figure->GetHeight() / 2 + 5);
+	}
+	SetScrollSizes(MM_TEXT, CSize(width, height));
 }

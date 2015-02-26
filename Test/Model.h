@@ -14,9 +14,10 @@
 #pragma once
 #include <vector>
 #include <memory>
+#include <functional>
 #include "IModel.h"
 #include "IAction.h"
-#include <functional>
+#include "ActionHandler.h"
 
 class CModel : public CDocument, public IModel
 {
@@ -33,21 +34,16 @@ public:
 	void AddNewTriangle(int centerX, int centerY, unsigned int width, unsigned int height);
 	void Remove(std::shared_ptr<IFigure> const& figure);
 	void MoveAndResizeFigure(std::shared_ptr<IFigure> const& figure, int deltaX, int deltaY, int deltaWidth, int deltaHeight);
-	void Undo();
-	void Redo();
-	bool CanUndo() const;
-	bool CanRedo() const;
 	void SetOnChangeCallback(std::function<void()> const& callback);
+	void OnChange();
+	CActionHandler * GetActionHandler() { return &m_actHandler; }
 protected:
 	CModel();
 	DECLARE_DYNCREATE(CModel)
 	DECLARE_MESSAGE_MAP()
 private:
 	void Reset();
-	void OnChange();
-	void AddAction(std::unique_ptr<IAction> && action, bool execute = true);
+	CActionHandler m_actHandler;
 	std::vector<std::shared_ptr<IFigure>> m_figures;
-	std::vector<std::unique_ptr<IAction>> m_actions;
-	int m_currentActionIndex;
 	std::function<void()> m_onChangeCallback;
 };

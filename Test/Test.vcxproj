@@ -102,6 +102,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ActionDeleteFigure.h" />
+    <ClInclude Include="ActionHandler.h" />
     <ClInclude Include="ActionNewFigure.h" />
     <ClInclude Include="ActionMoveResizeFigure.h" />
     <ClInclude Include="Figure.h" />
@@ -123,6 +124,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ActionDeleteFigure.cpp" />
+    <ClCompile Include="ActionHandler.cpp" />
     <ClCompile Include="ActionNewFigure.cpp" />
     <ClCompile Include="ActionMoveResizeFigure.cpp" />
     <ClCompile Include="Figure.cpp" />

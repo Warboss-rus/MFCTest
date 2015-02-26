@@ -34,7 +34,7 @@ END_MESSAGE_MAP()
 
 // CModel construction/destruction
 
-CModel::CModel():m_currentActionIndex(-1)
+CModel::CModel() :m_actHandler(this)
 {
 	// TODO: add one-time construction code here
 
@@ -154,74 +154,35 @@ void CModel::Remove(std::shared_ptr<IFigure> const& figure)
 void CModel::AddNewRectangle(int centerX, int centerY, unsigned int width, unsigned int height)
 {
 	std::shared_ptr<IFigure> figure(new CRectangle(centerX, centerY, width, height));
-	AddAction(std::make_unique<CActionNewFigure>(this, figure));
+	m_actHandler.AddAction(std::make_unique<CActionNewFigure>(this, figure));
 }
 
 void CModel::AddNewCircle(int centerX, int centerY, unsigned int width, unsigned int height)
 {
 	std::shared_ptr<IFigure> figure(new CCircle(centerX, centerY, width, height));
-	AddAction(std::make_unique<CActionNewFigure>(this, figure));
+	m_actHandler.AddAction(std::make_unique<CActionNewFigure>(this, figure));
 }
 
 void CModel::AddNewTriangle(int centerX, int centerY, unsigned int width, unsigned int height)
 {
 	std::shared_ptr<IFigure> figure(new CTriangle(centerX, centerY, width, height));
-	AddAction(std::make_unique<CActionNewFigure>(this, figure));
+	m_actHandler.AddAction(std::make_unique<CActionNewFigure>(this, figure));
 }
 
 void CModel::RemoveFigure(std::shared_ptr<IFigure> const& figure)
 {
-	AddAction(std::make_unique<CActionDeleteFigure>(this, figure));
+	m_actHandler.AddAction(std::make_unique<CActionDeleteFigure>(this, figure));
 }
 
 void CModel::MoveAndResizeFigure(std::shared_ptr<IFigure> const& figure, int deltaX, int deltaY, int deltaWidth, int deltaHeight)
 {
-	AddAction(std::make_unique<CActionMoveResizeFigure>(figure, deltaWidth, deltaHeight, deltaX, deltaY), false);
-}
-
-void CModel::AddAction(std::unique_ptr<IAction> && action, bool execute)
-{
-	if (m_currentActionIndex != m_actions.size() - 1)
-	{
-		m_actions.erase(m_actions.begin() + m_currentActionIndex, m_actions.end());
-	}
-	if (execute) action->Redo();
-	m_actions.push_back(std::move(action));
-	m_currentActionIndex = m_actions.size() - 1;
-	OnChange();
-}
-
-void CModel::Undo()
-{
-	if (m_currentActionIndex < 0) return;
-	m_actions[m_currentActionIndex]->Undo();
-	m_currentActionIndex--;
-	OnChange();
-}
-
-void CModel::Redo()
-{
-	if (!CanRedo()) return;
-	m_currentActionIndex++;
-	m_actions[m_currentActionIndex]->Redo();
-	OnChange();
-}
-
-bool CModel::CanRedo() const
-{
-	return m_currentActionIndex < (int)m_actions.size() - 1;
-}
-
-bool CModel::CanUndo() const
-{
-	return m_currentActionIndex >= 0;
+	m_actHandler.AddAction(std::make_unique<CActionMoveResizeFigure>(figure, deltaWidth, deltaHeight, deltaX, deltaY), false);
 }
 
 void CModel::Reset()
 {
 	m_figures.clear();
-	m_actions.clear();
-	m_currentActionIndex = -1;
+	m_actHandler.Reset();
 }
 
 void CModel::OnChange()
